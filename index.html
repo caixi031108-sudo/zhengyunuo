@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>分数看得见</title>
+<style>
+:root{--bg:#eef3fb;--card:#fff;--ink:#16213e;--mute:#5b6685;--fill:#2e6bff;--off:#e1e8f6;--acc:#ffc531;--line:#cfd8ec;--ok:#1f9d55;--bad:#e5484d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1424;--card:#181f36;--ink:#e8ecfa;--mute:#9aa6c9;--fill:#6c97ff;--off:#2a3355;--line:#2f3a60}}
+:root[data-theme="dark"]{--bg:#0f1424;--card:#181f36;--ink:#e8ecfa;--mute:#9aa6c9;--fill:#6c97ff;--off:#2a3355;--line:#2f3a60}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;line-height:1.6}
+main{max-width:1180px;margin:0 auto;padding:28px 20px 40px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+h1{font-size:34px;margin:0;letter-spacing:.02em;line-height:1.2}
+.sub{color:var(--mute);margin:4px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:8px}
+.bar button{font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:12px;min-height:44px;padding:0 16px;cursor:pointer;transition:border-color .15s}
+.bar button:hover{border-color:var(--fill)}
+.bar button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#16213e;font-weight:700}
+kbd{font:12px/1 ui-monospace,Menlo,Consolas,monospace;border:1px solid currentColor;border-radius:4px;padding:2px 5px;margin-left:6px;opacity:.6}
+button:focus-visible,input:focus-visible{outline:3px solid var(--fill);outline-offset:2px}
+.grid{display:grid;gap:20px;grid-template-columns:1fr}
+.grid.two{grid-template-columns:1fr 1fr}
+.card{background:var(--card);border-radius:24px;padding:28px;display:grid;grid-template-columns:minmax(0,460px) 1fr;gap:36px;align-items:center}
+.grid.two .card{grid-template-columns:1fr;gap:20px;justify-items:center}
+.grid.two .card.act{outline:3px solid var(--acc)}
+.stage{width:100%;max-width:460px}
+.grid.two .stage{max-width:320px}
+svg{width:100%;height:auto;display:block}
+svg .on{fill:var(--fill)}svg .off{fill:var(--off)}
+svg .on,svg .off{stroke:var(--card);stroke-width:3;cursor:pointer;transition:fill .2s}
+svg .off:hover{fill:var(--line)}svg .on:hover{opacity:.85}
+svg .tick{stroke:var(--mute);stroke-width:2}
+svg text{fill:var(--mute);font-size:14px;text-anchor:middle}
+.panel{width:100%}
+.frac{display:inline-flex;flex-direction:column;align-items:center;font-size:84px;font-weight:800;line-height:1.05}
+.grid.two .frac{font-size:60px}
+.frac .n{color:var(--fill)}
+.frac i{display:block;width:100%;height:6px;border-radius:3px;background:var(--ink);margin:6px 0}
+.say{font-size:20px;margin:12px 0 4px}
+.hint{color:var(--mute);margin:0 0 20px;min-height:1.6em}
+.ctl{display:grid;grid-template-columns:auto 1fr 2.4ch;gap:12px 14px;align-items:center}
+.ctl input{width:100%;accent-color:var(--fill);height:28px}
+.ctl output{font-weight:700;font-size:20px;text-align:right}
+.res{margin-top:20px;background:var(--card);border-radius:16px;padding:14px 18px;text-align:center;font-size:24px;font-weight:700}
+.keys{color:var(--mute);font-size:14px;margin-top:22px;display:flex;flex-wrap:wrap;gap:6px 22px}
+[hidden]{display:none!important}
+.btn{font:inherit;font-weight:700;color:#fff;background:var(--fill);border:2px solid var(--fill);border-radius:12px;min-height:44px;padding:0 22px;cursor:pointer}
+.btn:hover{opacity:.9}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);font-weight:400}
+.lv{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.lvc{display:flex;flex-direction:column;gap:6px;text-align:left;font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:20px;padding:20px;cursor:pointer}
+.lvc:hover:not(:disabled){border-color:var(--fill)}
+.lvc:disabled{opacity:.5;cursor:not-allowed}
+.lvc b{font-size:20px}
+.lvc span{color:var(--mute)}
+.st{color:var(--acc);font-size:22px;letter-spacing:2px}
+.st.big{font-size:48px;margin:8px 0}
+.qtop{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.qcard{background:var(--card);border-radius:24px;padding:28px;display:grid;grid-template-columns:minmax(0,460px) 1fr;gap:36px;align-items:center}
+.qcard.end{grid-template-columns:1fr;text-align:center}
+.qcard .row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.qp{font-size:26px;font-weight:700;margin:0 0 18px;line-height:1.5}
+.qp .mf{vertical-align:middle;font-size:34px}
+.static svg{pointer-events:none}
+.pair{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lab{text-align:center;margin:6px 0 0;color:var(--mute)}
+.opts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.opt{font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:16px;min-height:92px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.opt.txt{font-size:22px;font-weight:700}
+.opt:hover:not(:disabled){border-color:var(--fill)}
+.opt:disabled{cursor:default}
+.opt.ok{border-color:var(--ok);box-shadow:inset 0 0 0 2px var(--ok)}
+.opt.bad{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}
+.mf{display:inline-flex;flex-direction:column;align-items:center;font-size:32px;font-weight:800;line-height:1.05}
+.mf i{display:block;width:100%;height:4px;background:currentColor;margin:3px 0;border-radius:2px}
+.fb{min-height:3.4em;margin:16px 0 8px;font-size:18px}
+.fb.ok{color:var(--ok)}.fb.bad{color:var(--bad)}
+@media(max-width:860px){.card,.grid.two,.qcard{grid-template-columns:1fr}.card{gap:20px}.frac{font-size:60px}}
+@media(prefers-reduced-motion:reduce){svg .on,svg .off,.bar button{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><h1>分数看得见</h1><p class="sub">拖动滑块，看整体被分成几份、取了几份。</p></div>
+<div class="bar" id="bar" role="group" aria-label="选择图形">
+<button data-shape="pie">圆饼<kbd>1</kbd></button><button data-shape="sq">方形<kbd>2</kbd></button><button data-shape="bar">长条<kbd>3</kbd></button><button data-shape="line">数轴<kbd>4</kbd></button>
+<button id="cmp" aria-pressed="false">比一比<kbd>C</kbd></button>
+</div>
+</header>
+<div class="bar" id="modes" style="margin-bottom:18px"><button data-mode="learn" aria-pressed="true">自由探索</button><button data-mode="quiz" aria-pressed="false">闯关模式</button></div>
+<div class="grid" id="grid"></div>
+<div class="res" id="res" hidden></div>
+<div class="keys" id="keys"><span><kbd>←</kbd><kbd>→</kbd> 改分子</span><span><kbd>↑</kbd><kbd>↓</kbd> 改分母</span><span><kbd>1</kbd>–<kbd>4</kbd> 换图形</span><span><kbd>C</kbd> 比一比</span><span><kbd>S</kbd> 切换左右分数</span></div>
+<div id="quiz" hidden></div>
+</main>
+<script>
+const S={mode:'learn',shape:'pie',cmp:false,act:'A',A:{n:3,d:4},B:{n:1,d:2}};
+const C=110,R=95;
+const DEF='把鼠标移到图形上看看，点击小块可以改分子。';
+function pie(d,n){
+ if(d===1)return `<circle cx="${C}" cy="${C}" r="${R}" data-i="0" class="${cnt(n)>0?'on':'off'}"/>`;
+ let o='';
+ for(let i=0;i<d;i++){
+  const a0=(-90+360*i/d)*Math.PI/180,a1=(-90+360*(i+1)/d)*Math.PI/180;
+  const x0=C+R*Math.cos(a0),y0=C+R*Math.sin(a0),x1=C+R*Math.cos(a1),y1=C+R*Math.sin(a1);
+  o+=`<path d="M${C} ${C}L${x0.toFixed(2)} ${y0.toFixed(2)}A${R} ${R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" data-i="${i}" class="${on(n,i)?'on':'off'}"/>`;
+ }
+ return o;
+}
+function sq(d,n){
+ let r=1;for(let k=1;k*k<=d;k++)if(d%k===0)r=k;
+ const c=d/r,w=200/c,h=200/r;let o='';
+ for(let i=0;i<d;i++)o+=`<rect x="${10+(i%c)*w}" y="${10+Math.floor(i/c)*h}" width="${w}" height="${h}" rx="4" data-i="${i}" class="${on(n,i)?'on':'off'}"/>`;
+ return o;
+}
+function bar(d,n){
+ let o='';const w=200/d;
+ for(let i=0;i<d;i++)o+=`<rect x="${10+i*w}" y="75" width="${w}" height="70" rx="4" data-i="${i}" class="${on(n,i)?'on':'off'}"/>`;
+ return o;
+}
+function line(d,n){
+ let o='';const w=200/d;
+ for(let i=0;i<d;i++)o+=`<rect x="${10+i*w}" y="106" width="${w}" height="26" data-i="${i}" class="${on(n,i)?'on':'off'}"/>`;
+ for(let i=0;i<=d;i++)o+=`<line class="tick" x1="${10+i*w}" x2="${10+i*w}" y1="${i%d===0?96:100}" y2="${i%d===0?142:138}"/>`;
+ o+=`<text x="10" y="164">0</text><text x="210" y="164">1</text>`;
+ if(n>0)o+=`<circle cx="${10+n*w}" cy="119" r="10" fill="#ffc531" stroke="#16213e" stroke-width="3" pointer-events="none"/>`;
+ return o;
+}
+const draw={pie,sq,bar,line};
+const names={pie:'圆饼',sq:'方形',bar:'长条',line:'数轴'};
+function say(f){
+ if(f.n===0)return `整体平均分成 ${f.d} 份，一份也没取。`;
+ if(f.n===f.d)return `整体平均分成 ${f.d} 份，全部取走，正好是 1 个整体。`;
+ return `整体平均分成 ${f.d} 份，取其中 ${f.n} 份。`;
+}
+function skeleton(k){
+ return `<section class="card" data-k="${k}">
+ <div class="stage"><svg viewBox="0 0 220 220" role="img"></svg></div>
+ <div class="panel">
+  <div class="frac"><span class="n"></span><i></i><span class="d"></span></div>
+  <p class="say"></p><p class="hint">${DEF}</p>
+  <div class="ctl">
+   <label for="d${k}">分母（分成几份）</label><input id="d${k}" data-f="d" type="range" min="1" max="12"><output class="od"></output>
+   <label for="n${k}">分子（取几份）</label><input id="n${k}" data-f="n" type="range" min="0"><output class="on2"></output>
+  </div></div></section>`;
+}
+function build(){
+ const g=document.getElementById('grid');
+ g.className='grid'+(S.cmp?' two':'');
+ g.innerHTML=skeleton('A')+(S.cmp?skeleton('B'):'');
+ document.getElementById('cmp').setAttribute('aria-pressed',S.cmp);
+ if(!S.cmp)S.act='A';
+ update();
+}
+function update(){
+ document.querySelectorAll('#bar [data-shape]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.shape===S.shape));
+ document.querySelectorAll('.card').forEach(c=>{
+  const k=c.dataset.k,f=S[k],q=s=>c.querySelector(s);
+  const sv=q('svg');sv.innerHTML=draw[S.shape](f.d,f.n);
+  sv.setAttribute('aria-label',`${names[S.shape]}：${f.n}/${f.d}`);
+  q('.frac .n').textContent=f.n;q('.frac .d').textContent=f.d;
+  q('.say').textContent=say(f);
+  q('[data-f=d]').value=f.d;q('.od').textContent=f.d;
+  const ns=q('[data-f=n]');ns.max=f.d;ns.value=f.n;q('.on2').textContent=f.n;
+  c.classList.toggle('act',S.cmp&&S.act===k);
+ });
+ const r=document.getElementById('res');r.hidden=!S.cmp;
+ if(S.cmp){
+  const l=S.A.n*S.B.d,rt=S.B.n*S.A.d;
+  const sym=l>rt?'>':l<rt?'<':'=';
+  r.textContent=`${S.A.n}/${S.A.d} ${sym} ${S.B.n}/${S.B.d}　${l>rt?'左边更大':l<rt?'右边更大':'两边相等'}`;
+ }
+}
+function setF(k,key,v){
+ const f=S[k];
+ if(key==='d'){f.d=Math.min(12,Math.max(1,v));f.n=Math.min(f.n,f.d)}
+ else f.n=Math.min(f.d,Math.max(0,v));
+}
+document.addEventListener('click',e=>{
+ if(e.target.closest('#quiz')){qClick(e);return}
+ const md=e.target.closest('[data-mode]');if(md){setMode(md.dataset.mode);return}
+ const sh=e.target.closest('[data-shape]');
+ if(sh){S.shape=sh.dataset.shape;update();return}
+ if(e.target.closest('#cmp')){S.cmp=!S.cmp;build();return}
+ const c=e.target.closest('.card');if(!c)return;
+ S.act=c.dataset.k;
+ const p=e.target.closest('[data-i]');
+ if(p){const i=+p.dataset.i,f=S[S.act];f.n=(i+1===f.n)?i:i+1}
+ update();
+});
+document.addEventListener('input',e=>{
+ const c=e.target.closest('.card');if(!c||!e.target.dataset.f)return;
+ S.act=c.dataset.k;setF(S.act,e.target.dataset.f,+e.target.value);update();
+});
+document.addEventListener('mouseover',e=>{
+ const c=e.target.closest('.card');if(!c)return;
+ const p=e.target.closest('[data-i]'),h=c.querySelector('.hint'),f=S[c.dataset.k];
+ h.textContent=p?`第 ${+p.dataset.i+1} 份，每份是整体的 1/${f.d}；点击取到这里。`:DEF;
+});
+document.addEventListener('keydown',e=>{
+ if(S.mode==='quiz'||e.target.tagName==='INPUT'||e.metaKey||e.ctrlKey||e.altKey)return;
+ const f=S[S.act],k=e.key.toLowerCase();
+ const sh={1:'pie',2:'sq',3:'bar',4:'line'};
+ if(sh[k]){S.shape=sh[k]}
+ else if(k==='c'){S.cmp=!S.cmp;build();return}
+ else if(k==='s'&&S.cmp){S.act=S.act==='A'?'B':'A'}
+ else if(k==='arrowright')setF(S.act,'n',f.n+1);
+ else if(k==='arrowleft')setF(S.act,'n',f.n-1);
+ else if(k==='arrowup')setF(S.act,'d',f.d+1);
+ else if(k==='arrowdown')setF(S.act,'d',f.d-1);
+ else return;
+ e.preventDefault();update();
+});
+const on=(n,i)=>n instanceof Set?n.has(i):i<n;
+const cnt=n=>n instanceof Set?n.size:n;
+const LV=[
+ {t:'认识 1/2、1/3、1/4',d:'看图选出几分之一',type:'pick',lo:2,hi:4,one:1},
+ {t:'更多几分之一',d:'整体分成 2 到 8 份',type:'pick',lo:2,hi:8,one:1},
+ {t:'几分之几',d:'涂色的不止 1 份',type:'pick',lo:3,hi:8,one:0},
+ {t:'动手涂色',d:'按分数涂出对应的份数',type:'paint',lo:2,hi:8},
+ {t:'几分之一比大小',d:'哪一份更大？',type:'cmp',lo:2,hi:9}];
+let P={unlocked:1,stars:{}};
+try{const s=JSON.parse(localStorage.getItem('frac_p')||'null');if(s)P=s}catch(_){}
+const save=()=>{try{localStorage.setItem('frac_p',JSON.stringify(P))}catch(_){}};
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const shuf=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+const fr=(n,d)=>`<span class="mf"><b>${n}</b><i></i><b>${d}</b></span>`;
+let Q=null;
+const $=id=>document.getElementById(id);
+function setMode(m){
+ S.mode=m;const qz=m==='quiz';
+ ['grid','res','keys','bar'].forEach(i=>$(i).hidden=qz);
+ $('quiz').hidden=!qz;
+ document.querySelectorAll('#modes [data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));
+ if(qz)showLevels();else build();
+}
+function showLevels(){
+ Q=null;
+ $('quiz').innerHTML='<p class="sub" style="margin:0 0 14px">每关 5 题，答错不超过 2 题就能过关，过关后解锁下一关。</p><div class="lv">'+LV.map((l,i)=>{
+  const lock=i+1>P.unlocked,s=P.stars[i]||0;
+  return `<button class="lvc" data-lv="${i}" ${lock?'disabled':''}><b>第 ${i+1} 关　${l.t}</b><span>${l.d}</span><div class="st">${'★'.repeat(s)}${'☆'.repeat(3-s)}${lock?'　未解锁':''}</div></button>`}).join('')+'</div>';
+}
+function startLv(i){Q={lv:i,i:0,wrong:0,sel:new Set(),res:null};Q.cur=gen();renderQ()}
+function gen(){
+ const l=LV[Q.lv],shape=shuf(['pie','sq','bar'])[0];
+ if(l.type==='cmp'){let a=rnd(l.lo,l.hi),b=rnd(l.lo,l.hi);while(b===a)b=rnd(l.lo,l.hi);return{type:'cmp',shape,a,b}}
+ const d=rnd(l.lo,l.hi),n=l.one?1:l.type==='paint'?rnd(1,d-1):rnd(2,d-1);
+ if(l.type==='paint')return{type:'paint',shape,d,n};
+ const o=[[n,d]],key=[n+'/'+d];
+ const add=(x,y)=>{if(o.length>=4||x<1||y<2||x>=y||key.includes(x+'/'+y)||x*d===n*y)return;key.push(x+'/'+y);o.push([x,y])};
+ shuf([[n,d+1],[n,d-1],[n+1,d],[n-1,d],[d-n,d],[n+1,d+1]]).forEach(p=>add(p[0],p[1]));
+ for(let t=0;o.length<4&&t<60;t++)add(rnd(1,l.hi-1),rnd(l.lo,l.hi));
+ const sel=new Set(shuf([...Array(d).keys()]).slice(0,n));
+ return{type:'pick',shape,d,n,sel,opts:shuf(o)};
+}
+function renderQ(){
+ const c=Q.cur,r=Q.res,svg=(d,n)=>`<svg viewBox="0 0 220 220" role="img" aria-label="分数图形">${draw[c.shape](d,n)}</svg>`;
+ let stage,prompt,opts='';
+ if(c.type==='cmp'){
+  stage=`<div class="pair static"><div>${svg(c.a,1)}<p class="lab">左边</p></div><div>${svg(c.b,1)}<p class="lab">右边</p></div></div>`;
+  prompt='两个图形一样大，各涂了 1 份。哪边涂色的那一份更大？';
+  const right=c.a<c.b?'L':'R';
+  opts='<div class="opts">'+['L','R'].map(s=>`<button class="opt txt ${r?(s===right?'ok':(Q.pick===s?'bad':'')):''}" data-ans="${s}" ${r?'disabled':''}>${s==='L'?'左边':'右边'}</button>`).join('')+'</div>';
+ }else if(c.type==='pick'){
+  stage=`<div class="stage static">${svg(c.d,c.sel)}</div>`;
+  prompt='涂色部分是整体的几分之几？';
+  opts='<div class="opts">'+c.opts.map((o,i)=>{const right=o[0]===c.n&&o[1]===c.d;return `<button class="opt ${r?(right?'ok':(Q.pick===i?'bad':'')):''}" data-ans="${i}" ${r?'disabled':''}>${fr(o[0],o[1])}</button>`}).join('')+'</div>';
+ }else{
+  stage=`<div class="stage">${svg(c.d,Q.sel)}</div>`;
+  prompt=`涂出 ${fr(c.n,c.d)}，点一点小块来涂色。`;
+  opts=r?'':'<button class="btn" data-act="check">确认</button>';
+ }
+ $('quiz').innerHTML=`<div class="qtop"><span>第 ${Q.lv+1} 关　第 ${Q.i+1}/5 题　答错 ${Q.wrong} 题</span><button class="btn ghost" data-act="back">返回选关</button></div>
+ <div class="qcard">${stage}<div><p class="qp">${prompt}</p>${opts}<p class="fb ${r?(r.ok?'ok':'bad'):''}">${r?r.msg:''}</p>${r?`<button class="btn" data-act="next">${Q.i+1>=5?'看结果':'下一题'}</button>`:''}</div></div>`;
+}
+function answer(ok,msg){if(!ok)Q.wrong++;Q.res={ok,msg:(ok?'答对了！':'再想想。')+msg};renderQ()}
+function finish(){
+ const w=Q.wrong,pass=w<=2,s=pass?3-w:0;
+ if(pass){P.stars[Q.lv]=Math.max(P.stars[Q.lv]||0,s);P.unlocked=Math.max(P.unlocked,Math.min(LV.length,Q.lv+2));save()}
+ $('quiz').innerHTML=`<div class="qcard end"><div><p class="qp">${pass?'过关了！':'差一点点'}</p><div class="st big">${'★'.repeat(s)}${'☆'.repeat(3-s)}</div><p>5 题答错 ${w} 题。${pass?'':'答错不超过 2 题才能过关，再试一次吧。'}</p><div class="row"><button class="btn" data-act="again">再玩一次</button>${pass&&Q.lv+1<LV.length?'<button class="btn" data-act="nextlv">下一关</button>':''}<button class="btn ghost" data-act="back">返回选关</button></div></div></div>`;
+}
+function qClick(e){
+ const lv=e.target.closest('[data-lv]');
+ if(lv&&!lv.disabled){startLv(+lv.dataset.lv);return}
+ const act=e.target.closest('[data-act]');
+ if(act){
+  const a=act.dataset.act;
+  if(a==='back')showLevels();
+  else if(a==='next'){Q.i++;if(Q.i>=5)finish();else{Q.cur=gen();Q.sel=new Set();Q.res=null;renderQ()}}
+  else if(a==='check'&&!Q.res){const c=Q.cur,ok=Q.sel.size===c.n;answer(ok,`${c.n}/${c.d} 表示整体平均分成 ${c.d} 份，取其中 ${c.n} 份。`+(ok?'':`你涂了 ${Q.sel.size} 份。`))}
+  else if(a==='again')startLv(Q.lv);
+  else if(a==='nextlv')startLv(Q.lv+1);
+  return;
+ }
+ if(!Q||Q.res)return;
+ const an=e.target.closest('[data-ans]');
+ if(an){
+  const c=Q.cur,v=an.dataset.ans;
+  if(c.type==='pick'){const o=c.opts[+v];Q.pick=+v;answer(o[0]===c.n&&o[1]===c.d,`整体分成 ${c.d} 份，涂色 ${c.n} 份，所以是 ${c.n}/${c.d}。`)}
+  else{Q.pick=v;answer(v===(c.a<c.b?'L':'R'),`平均分的份数越少，每一份越大。分成 ${Math.min(c.a,c.b)} 份的那一份更大。`)}
+  return;
+ }
+ const p=e.target.closest('[data-i]');
+ if(p&&Q.cur.type==='paint'){const i=+p.dataset.i;Q.sel.has(i)?Q.sel.delete(i):Q.sel.add(i);renderQ()}
+}
+build();
+</script>
+</body>
+</html>
